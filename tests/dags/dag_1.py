@@ -13,7 +13,8 @@ default_args = {
 }
 
 def print_envs():
-    print(os.getenv('AWS_DEFAULT_REGION'))
+    print('printing log')
+    print(os.getenv('AWS_DEFAULT_REGION', 'env not found'))
 
 with DAG(dag_id="this_should_show_up", default_args=default_args, schedule_interval='@once') as dag:
     task_a = PythonOperator(
