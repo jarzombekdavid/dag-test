@@ -1,52 +1,67 @@
-import os
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
-from datetime import timedelta
-from textwrap import dedent
+"""Example DAG demonstrating the usage of the PythonOperator."""
+import time, os
+from pprint import pprint
 
-# The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
-
-# Operators; we need this to operate!
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
-# [END import_module]
-
-# [START default_args]
-# These args will get passed on to each operator
-# You can override them on a per-task basis during operator initialization
-default_args = {
+args = {
     'owner': 'airflow',
-    'depends_on_past': False,
-    'email': ['airflow@example.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
 }
-# [END default_args]
 
-
-def test_funct():
-    print('environmentvariable')
-    var = os.getenv('TEST_ENV_VARIABLE')
-    print(var)
-
-# [START instantiate_dag]
 with DAG(
-    'tutorial',
-    default_args=default_args,
-    description='A simple tutorial DAG',
-    schedule_interval=timedelta(days=1),
+    dag_id='example_python_operator',
+    default_args=args,
+    schedule_interval=None,
     start_date=days_ago(2),
     tags=['example'],
 ) as dag:
-    # [END instantiate_dag]
 
-    # t1, t2 and t3 are examples of tasks created by instantiating operators
-    # [START basic_task]
+    # [START howto_operator_python]
+    def print_context(ds, **kwargs):
+        """Print the Airflow context and ds variable from the context."""
+        pprint(kwargs)
+        print(ds)
+        print(os.getenv('TEST_VAR', ''))
+        return 'Whatever you return gets printed in the logs'
+
     run_this = PythonOperator(
         task_id='print_the_context',
-        python_callable=test_funct,
+        python_callable=print_context,
     )
-    # [END basic_task]
+    # [END howto_operator_python]
+
+    # [START howto_operator_python_kwargs]
+    def my_sleeping_function(random_base):
+        """This is a function that will run within the DAG execution"""
+        time.sleep(random_base)
+
+    # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
+    for i in range(5):
+        task = PythonOperator(
+            task_id='sleep_for_' + str(i),
+            python_callable=my_sleeping_function,
+            op_kwargs={'random_base': float(i) / 10},
+        )
+
+        run_this >> task
+    # [END howto_operator_python_kwargs]
