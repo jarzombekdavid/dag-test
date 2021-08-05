@@ -18,5 +18,5 @@ def print_envs():
 with DAG(dag_id="this_should_show_up", default_args=default_args, schedule_interval='@once') as dag:
     task_a = PythonOperator(
         task_id="test_task_a",
-        callable=print_envs
+        python_callable=print_envs
         )
