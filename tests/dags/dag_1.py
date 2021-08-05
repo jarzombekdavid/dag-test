@@ -11,5 +11,5 @@ default_args = {
     "start_date": DEFAULT_DATE,
 }
 
-with DAG(dag_id="test_only_dummy_tasks", default_args=default_args, schedule_interval='@once') as dag:
+with DAG(dag_id="this_should_show_up", default_args=default_args, schedule_interval='@once') as dag:
     task_a = DummyOperator(task_id="test_task_a")
